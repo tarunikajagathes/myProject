@@ -1,7 +1,8 @@
 'use strict';
 
 const Hapi = require('@hapi/hapi');
-const boom=require('@hapi/boom')
+const boom=require('@hapi/boom');
+const path = require('path');
 
 const users={
     tarunika:{
@@ -30,8 +31,10 @@ const init = async () => {
 
     const server = Hapi.server({
         port: 5000,
-        host: 'localhost'
-    });
+        host: 'localhost'  //we can add routes:{files:{relativeTO:}} to make use of all routes
+     });
+
+     server.log(['test', 'error'], 'Test event');
 
     await server.register([{
         plugin:require("hapi-geo-locate"),
@@ -44,6 +47,9 @@ const init = async () => {
     },
     {
         plugin:require("@hapi/cookie")
+    },
+    {
+        plugin:require("@hapi/inert")
     }])
 
 
@@ -59,7 +65,7 @@ const init = async () => {
     });
     console.log(server.methods.add(1,2));
 
-    
+
     server.auth.strategy('login','basic',{validate});
     server.auth.strategy('cookielogin','cookie',{
         cookie:{
@@ -84,8 +90,20 @@ const init = async () => {
         method: 'GET',
         path: '/',
         handler: (request, h) => {
-
+            request.log('error', 'Event error');
             return 'Hello World!';
+        }
+    },
+    {
+        method:'GET',
+        path:'/file',
+        handler:(request,h)=>{
+            return h.file("./welcome.html")
+        },
+        options:{
+            files:{
+                relativeTo:path.join(__dirname,'static')
+            }
         }
     },
     {
