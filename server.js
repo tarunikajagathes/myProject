@@ -2,6 +2,7 @@
 
 const Hapi = require('@hapi/hapi');
 const boom=require('@hapi/boom');
+const Joi=require('joi')
 const path = require('path');
 
 const users={
@@ -146,6 +147,13 @@ const init = async () => {
 
             //h.redirect('/')        ----> redirects
             
+        },
+        options:{
+            validate:{
+                params:Joi.object({
+                user:Joi.string().min(3).max(15)
+                })
+            }
         }
     },
     {
@@ -155,6 +163,7 @@ const init = async () => {
             return 'Page does not exists';
         }
     }]);
+
 
     await server.start();
     console.log('Server running on %s', server.info.uri);
