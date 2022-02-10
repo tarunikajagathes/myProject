@@ -17,7 +17,7 @@ await server.register({
 server.route([{
   method: 'GET',
   path: '/',
-  handler: async (resquest:Request,h:ResponseToolkit) =>{
+  handler:(request:Request, h:ResponseToolkit) =>{
 
       return 'Hello World!';
   }

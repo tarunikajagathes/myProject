@@ -4,6 +4,7 @@ const Hapi = require('@hapi/hapi');
 const boom=require('@hapi/boom');
 const Joi=require('joi')
 const path = require('path');
+const fs=require('fs')
  
 const users={
     tarunika:{
@@ -31,7 +32,7 @@ const validate =async(request,username,password,h)=>{
 const init = async () => {
 
     const server = Hapi.server({
-        port: 5000,
+        port: 5500,
         host: 'localhost'  //we can add routes:{files:{relativeTO:}} to make use of all routes
      });
 
@@ -53,6 +54,16 @@ const init = async () => {
         plugin:require("@hapi/inert")
     }])
 
+    const handleFileUpload = file => {
+        return new Promise((resolve, reject) => {
+          fs.writeFile('./upload/test.png', file, err => {
+             if (err) {
+              reject(err)
+             }
+             resolve({ message: 'Upload successfully!' })
+          })
+        })
+       }
 
     const add = function (x, y) {
 
@@ -67,6 +78,7 @@ const init = async () => {
     console.log(server.methods.add(1,2));
 
 
+    
     server.auth.strategy('login','basic',{validate});
     server.auth.strategy('cookielogin','cookie',{
         cookie:{
@@ -91,9 +103,46 @@ const init = async () => {
         method: 'GET',
         path: '/',
         handler: (request, h) => {
-            request.log('error', 'Event error');
             return 'Hello World!';
         }
+    },
+    {
+        method:'POST',
+         path:'/submit',
+         
+        handler:async(request,h)=>{
+           // request.headers['content-type'] = 'application/json';
+            const data=request.payload;
+           // console.log(data.file);
+            if(data.file){
+                const name = data.file.hapi.filename;
+            const path = __dirname+"/uploads/"+name;
+            const file = fs.createWriteStream(path);
+            file.on('error', (err) => console.error("error",err));
+
+          await  data.file.pipe(file);
+
+         await   data.file.on('end', (err) => { 
+                const ret = {
+                    filename: data.file.hapi.filename,
+                    headers: data.file.hapi.headers
+                }
+                return JSON.stringify(ret);
+            })
+        }
+        else{
+            return "hello"
+        }
+        return 'ok';
+        
+    },
+    options: {
+        payload: {
+            output: 'stream',
+            parse: true,
+            multipart: true   
+        }
+            }
     },
     {
         method:'GET',
